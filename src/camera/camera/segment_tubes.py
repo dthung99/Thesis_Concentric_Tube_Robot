@@ -197,7 +197,7 @@ class ColorExtractorNode(Node):
         matched_result=find_points_nearest_to_lines_and_return_one_on_those_lines(points=coordinates_1.reshape(-1,2),
                                                                                   lines=lines_1.reshape(-1,3),
                                                                                   square_of_cut_off_for_near=1.5,
-                                                                                  std_cut_off=5)
+                                                                                  std_cut_off=20)
         matched_coordinates_1, matched_mask = matched_result
         if matched_mask.sum()==0:
             self.simple_plot(fgmask_0, fgmask_1, self.back_image)
@@ -233,6 +233,11 @@ class ColorExtractorNode(Node):
         cv2.imshow('frame_0', fgmask_0)
         cv2.imshow('frame_1', fgmask_1)
         cv2.imshow('validation', img)
+        # Read the camera
+        ret, frame = self.cap_0.read()
+        cv2.imshow('frame_0_o', frame)
+        ret, frame = self.cap_1.read()
+        cv2.imshow('frame_1_o', frame)
         cv2.waitKey(1)
         rclpy.logging.get_logger('my_logger').info(f"Execute time {round(time.perf_counter()-start_time,3)}")
     def simple_plot(self, fgmask_0, fgmask_1, back_image):
