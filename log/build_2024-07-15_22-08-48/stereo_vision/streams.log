@@ -1,0 +1,38 @@
+[1.017s] Invoking command in '/home/dangthehung/ros2_ws/src/stereo_vision': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/dangthehung/ros2_ws/build/stereo_vision/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/dangthehung/ros2_ws/install/stereo_vision/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/stereo_vision build --build-base /home/dangthehung/ros2_ws/build/stereo_vision/build install --record /home/dangthehung/ros2_ws/build/stereo_vision/install.log --single-version-externally-managed install_data
+[1.329s] running egg_info
+[1.330s] creating ../../build/stereo_vision/stereo_vision.egg-info
+[1.353s] writing ../../build/stereo_vision/stereo_vision.egg-info/PKG-INFO
+[1.353s] writing dependency_links to ../../build/stereo_vision/stereo_vision.egg-info/dependency_links.txt
+[1.353s] writing entry points to ../../build/stereo_vision/stereo_vision.egg-info/entry_points.txt
+[1.353s] writing requirements to ../../build/stereo_vision/stereo_vision.egg-info/requires.txt
+[1.353s] writing top-level names to ../../build/stereo_vision/stereo_vision.egg-info/top_level.txt
+[1.353s] writing manifest file '../../build/stereo_vision/stereo_vision.egg-info/SOURCES.txt'
+[1.397s] reading manifest file '../../build/stereo_vision/stereo_vision.egg-info/SOURCES.txt'
+[1.397s] adding license file 'LICENSE'
+[1.398s] writing manifest file '../../build/stereo_vision/stereo_vision.egg-info/SOURCES.txt'
+[1.398s] running build
+[1.398s] running build_py
+[1.398s] creating /home/dangthehung/ros2_ws/build/stereo_vision/build
+[1.398s] creating /home/dangthehung/ros2_ws/build/stereo_vision/build/lib
+[1.399s] creating /home/dangthehung/ros2_ws/build/stereo_vision/build/lib/stereo_vision
+[1.399s] copying stereo_vision/__init__.py -> /home/dangthehung/ros2_ws/build/stereo_vision/build/lib/stereo_vision
+[1.399s] copying stereo_vision/print_hello.py -> /home/dangthehung/ros2_ws/build/stereo_vision/build/lib/stereo_vision
+[1.399s] running install
+[1.406s] running install_lib
+[1.430s] creating /home/dangthehung/ros2_ws/install/stereo_vision/lib/python3.12/site-packages/stereo_vision
+[1.430s] copying /home/dangthehung/ros2_ws/build/stereo_vision/build/lib/stereo_vision/__init__.py -> /home/dangthehung/ros2_ws/install/stereo_vision/lib/python3.12/site-packages/stereo_vision
+[1.430s] copying /home/dangthehung/ros2_ws/build/stereo_vision/build/lib/stereo_vision/print_hello.py -> /home/dangthehung/ros2_ws/install/stereo_vision/lib/python3.12/site-packages/stereo_vision
+[1.432s] byte-compiling /home/dangthehung/ros2_ws/install/stereo_vision/lib/python3.12/site-packages/stereo_vision/__init__.py to __init__.cpython-312.pyc
+[1.432s] byte-compiling /home/dangthehung/ros2_ws/install/stereo_vision/lib/python3.12/site-packages/stereo_vision/print_hello.py to print_hello.cpython-312.pyc
+[1.433s] running install_data
+[1.433s] creating /home/dangthehung/ros2_ws/install/stereo_vision/share/ament_index
+[1.433s] creating /home/dangthehung/ros2_ws/install/stereo_vision/share/ament_index/resource_index
+[1.433s] creating /home/dangthehung/ros2_ws/install/stereo_vision/share/ament_index/resource_index/packages
+[1.434s] copying resource/stereo_vision -> /home/dangthehung/ros2_ws/install/stereo_vision/share/ament_index/resource_index/packages
+[1.434s] copying package.xml -> /home/dangthehung/ros2_ws/install/stereo_vision/share/stereo_vision
+[1.434s] running install_egg_info
+[1.458s] Copying ../../build/stereo_vision/stereo_vision.egg-info to /home/dangthehung/ros2_ws/install/stereo_vision/lib/python3.12/site-packages/stereo_vision-0.0.0-py3.12.egg-info
+[1.458s] running install_scripts
+[1.607s] Installing print_hello script to /home/dangthehung/ros2_ws/install/stereo_vision/lib/stereo_vision
+[1.607s] writing list of installed files to '/home/dangthehung/ros2_ws/build/stereo_vision/install.log'
+[1.650s] Invoked command in '/home/dangthehung/ros2_ws/src/stereo_vision' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/dangthehung/ros2_ws/build/stereo_vision/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/dangthehung/ros2_ws/install/stereo_vision/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/stereo_vision build --build-base /home/dangthehung/ros2_ws/build/stereo_vision/build install --record /home/dangthehung/ros2_ws/build/stereo_vision/install.log --single-version-externally-managed install_data

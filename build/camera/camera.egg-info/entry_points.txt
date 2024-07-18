@@ -1,0 +1,2 @@
+[console_scripts]
+print_hello = camera.print_hello:main

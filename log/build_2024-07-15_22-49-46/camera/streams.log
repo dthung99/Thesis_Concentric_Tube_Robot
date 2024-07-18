@@ -1,0 +1,37 @@
+[0.956s] Invoking command in '/home/dangthehung/ros2_ws/build/camera': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/dangthehung/ros2_ws/build/camera/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/dangthehung/ros2_ws/install/camera/lib/python3.12/site-packages:${PYTHONPATH} VIRTUAL_ENV_PROMPT=(myenv) /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py develop --editable --build-directory /home/dangthehung/ros2_ws/build/camera/build --no-deps symlink_data
+[1.343s] running develop
+[1.343s] /usr/lib/python3/dist-packages/setuptools/command/develop.py:40: EasyInstallDeprecationWarning: easy_install command is deprecated.
+[1.343s] !!
+[1.343s] 
+[1.344s]         ********************************************************************************
+[1.344s]         Please avoid running ``setup.py`` and ``easy_install``.
+[1.344s]         Instead, use pypa/build, pypa/installer or other
+[1.344s]         standards-based tools.
+[1.344s] 
+[1.344s]         See https://github.com/pypa/setuptools/issues/917 for details.
+[1.344s]         ********************************************************************************
+[1.344s] 
+[1.344s] !!
+[1.344s]   easy_install.initialize_options(self)
+[1.584s] running egg_info
+[1.584s] creating camera.egg-info
+[1.606s] writing camera.egg-info/PKG-INFO
+[1.606s] writing dependency_links to camera.egg-info/dependency_links.txt
+[1.606s] writing entry points to camera.egg-info/entry_points.txt
+[1.606s] writing requirements to camera.egg-info/requires.txt
+[1.606s] writing top-level names to camera.egg-info/top_level.txt
+[1.606s] writing manifest file 'camera.egg-info/SOURCES.txt'
+[1.657s] reading manifest file 'camera.egg-info/SOURCES.txt'
+[1.657s] writing manifest file 'camera.egg-info/SOURCES.txt'
+[1.680s] running build_ext
+[1.680s] Creating /home/dangthehung/ros2_ws/install/camera/lib/python3.12/site-packages/camera.egg-link (link to .)
+[1.681s] Installing print_hello script to /home/dangthehung/ros2_ws/install/camera/lib/camera
+[1.681s] 
+[1.681s] Installed /home/dangthehung/ros2_ws/build/camera
+[1.681s] running symlink_data
+[1.681s] creating /home/dangthehung/ros2_ws/install/camera/share/ament_index
+[1.682s] creating /home/dangthehung/ros2_ws/install/camera/share/ament_index/resource_index
+[1.682s] creating /home/dangthehung/ros2_ws/install/camera/share/ament_index/resource_index/packages
+[1.682s] symbolically linking /home/dangthehung/ros2_ws/build/camera/resource/camera -> /home/dangthehung/ros2_ws/install/camera/share/ament_index/resource_index/packages
+[1.682s] symbolically linking /home/dangthehung/ros2_ws/build/camera/package.xml -> /home/dangthehung/ros2_ws/install/camera/share/camera
+[1.723s] Invoked command in '/home/dangthehung/ros2_ws/build/camera' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/dangthehung/ros2_ws/build/camera/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/dangthehung/ros2_ws/install/camera/lib/python3.12/site-packages:${PYTHONPATH} VIRTUAL_ENV_PROMPT=(myenv) /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py develop --editable --build-directory /home/dangthehung/ros2_ws/build/camera/build --no-deps symlink_data

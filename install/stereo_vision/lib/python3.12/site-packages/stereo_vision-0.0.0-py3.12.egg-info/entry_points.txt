@@ -1,0 +1,2 @@
+[console_scripts]
+print_hello = stereo_vision.print_hello:main
