@@ -2,6 +2,14 @@ import numpy as np
 import networkx as nx
 import time
 
+def extract_non_zero_pixel_in_black_white_image(image):
+    """Input x is a np array (h, w) of uint8
+    """
+    # Sum over channels and find those >0
+    condition = image != 0
+    # Extract the coordinate of non-zero pixels
+    coordinate = np.stack(np.where(condition), axis=1)
+    return coordinate
 def extract_non_zero_pixel(image):
     """Input x is a np array (h, w, c) of uint8
     """
@@ -20,7 +28,7 @@ def get_adjacency_matrix(coordinates, neighbour_square_distance_cut_off = 10):
     adjacency_matrix=coordinates[:,None,:]-coordinates[None,:,:]
     adjacency_matrix = np.sum(adjacency_matrix**2, axis=-1)
     adjacency_matrix = adjacency_matrix<neighbour_square_distance_cut_off
-    np.fill_diagonal(adjacency_matrix, 0.0)
+    np.fill_diagonal(adjacency_matrix, 0)
     return adjacency_matrix
 def get_connected_components(adjacency_matrix):
     """Input adjacency_matrix is a np array (n, n) of 0 and 1
@@ -91,6 +99,13 @@ if __name__ == '__main__':
     coordinates = extract_hsv_pixel_h(test_array, registered_colors=registered_colors, color_distance=0.5)
     target = np.array([[0, 0], [0, 1], [1, 2], [2, 2]])
     assert (coordinates==target).all(), "extract_hsv_pixel_h not working"
+
+    """Unit tests for funtions that are added later"""
+    # Additional unit test extract_non_zero_pixel_in_black_white_image
+    test_array_black_white = np.array([[2, 3, 0],[2, 0, 0], [1, 2, 3]])
+    target_black_white = np.array([[0, 0], [0, 1], [1, 0], [2, 0], [2, 1], [2, 2]])
+    coordinates_black_white = extract_non_zero_pixel_in_black_white_image(test_array_black_white)
+    assert (coordinates_black_white == target_black_white).all(), "extract_non_zero_pixel not working"
 
     print("All test passed")
 
