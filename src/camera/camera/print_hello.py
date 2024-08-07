@@ -13,6 +13,24 @@ from std_msgs.msg import String
 from camera.camera_register_module import *
 from camera.video_process_func import *
 
+test_point = None
+
+def configurate_camera(camera_device_name):
+    exposure=0
+    white_balance=4600
+    # Turn auto mode off for exposure and white balance
+    cap = cv2.VideoCapture(camera_device_name)
+    result = True
+    result = result & cap.set(cv2.CAP_PROP_AUTOFOCUS, 1.0)
+    result = result & cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 3.0)
+    result = result & cap.set(cv2.CAP_PROP_AUTO_WB, 1.0)
+    result = result & cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    result = result & cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 960)
+    # Set the exposure and white balance manually
+    # result = result & cap.set(cv2.CAP_PROP_EXPOSURE, exposure)
+    # result = result & cap.set(cv2.CAP_PROP_WB_TEMPERATURE, white_balance)
+    return result
+
 def calibrate_and_validate_one_camera(camera_device_name,
                                       checker_board_size=[10,7],
                                       checker_board_square_edge_length=25,
@@ -42,34 +60,96 @@ def calibrate_and_validate_one_camera(camera_device_name,
     validate_camera_registration(camera_device_name, rvecs, tvecs, mtx, dist, checker_board_square_edge_length)
     # Calculate the projection matrix
     projection_matrix = compute_projection_matrix(mtx, rvec=rvecs, tvec=tvecs)
-    return projection_matrix, mtx, rvecs, tvecs
+    return world_points, detected_corners, mtx, dist, rvecs, tvecs, projection_matrix
 
 def registering_background_and_colors_one_camera(camera_device_name,
                                                  number_of_frames_for_registering_background=100,
-                                                 number_of_frames_for_registering_colors=100):
+                                                 number_of_frames_for_registering_colors=100,
+                                                 background_varThreshold=128,
+                                                 color_varThreshold=16):
     # Show camera
     show_camera(camera_device_name=camera_device_name)
     # Start registering and segmentation
     rclpy.logging.get_logger('my_logger').info(f"Registering background {camera_device_name}... Please wait!!!")
     background_subtractor = register_background(camera_device_name=camera_device_name,
                                                 number_of_register_frame=number_of_frames_for_registering_background,
-                                                varThreshold=128)
+                                                varThreshold=background_varThreshold)
     rclpy.logging.get_logger('my_logger').info(f"Registering color {camera_device_name}... Please select your colors!!!")
     list_of_color_detectors = register_gmm_colors(camera_device_name=camera_device_name,
                                                   number_of_register_frame=number_of_frames_for_registering_colors,
-                                                  varThreshold=16)
+                                                  varThreshold=color_varThreshold)
     return background_subtractor, list_of_color_detectors
 
+def read_and_apply_subtractors_for_one_camera(cap, background_subtractor, list_of_color_detectors):
+    """Read from one camera and segment"""
+    # Read the camera
+    ret, frame = cap.read()
+    # First segment the background and get the mask
+    fgmask = background_subtractor.apply(frame, learningRate=0)==255 # The mask have 3 value 0 127 for shadow and 255 for foreground
+    # Second segment the colors by applying each detector on the frame and get the mask
+    fgmask_color = np.zeros(shape=frame.shape[0:2], dtype=np.bool)
+    for detector in list_of_color_detectors:
+        fgmask_i = detector.apply(frame, learningRate=0)
+        fgmask_i = ((fgmask_i==0) | (fgmask_i==127))
+        # Combine with previous masks
+        fgmask_color = fgmask_i | fgmask_color
+    # Combine with background masks
+    fgmask = fgmask & fgmask_color
+    return fgmask
+
+def drawline(image,line):
+    img = image.copy()
+    ''' img1 - image on which we draw the epilines for the points in img2
+        lines - corresponding epilines '''
+    if len(line) == 0:
+        return img
+    height, width = img.shape[0:2]
+    if img.shape[-1] == 3:
+        img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    r = line
+    color = tuple(np.random.randint(0,255,3).tolist())
+    x0,y0 = map(int, [0, -r[2]/r[1] ])
+    x1,y1 = map(int, [width, -(r[2]+r[0]*width)/r[1]])
+    img = cv2.line(img, (x0,y0), (x1,y1), color,1)
+    return img
+def draw_points(image, points, color=255, radius=1, thickness=1):
+    img = image.copy()
+    try:
+        for x, y in points:
+            cv2.circle(img, (int(x), int(y)), radius=radius, color=color, thickness=thickness)
+        return img
+    except Exception as e:
+        print(f"An error occurred: {type(e).__name__}")
+        print(f"Error message: {str(e)}")
+        return img
+
 class ColorExtractorNode(Node):
-    def __init__(self, camera_device_name, background_subtractor, list_of_color_detectors):
+    def __init__(self, camera_device_names, background_subtractors, lists_of_color_detectors, calibration_parameters, points_for_epilines=None):
         super().__init__('color_extractor_node')
         self.publisher_ = self.create_publisher(String, 'topic_name', 1)
         self.timer = self.create_timer(0.1, self.timer_callback)
-        self.camera_device_name = camera_device_name
-        self.background_subtractor = background_subtractor
-        self.list_of_color_detectors = list_of_color_detectors
+        self.camera_device_names = camera_device_names
+        self.background_subtractor_0 = background_subtractors[0]
+        self.background_subtractor_1 = background_subtractors[1]
+        self.list_of_color_detectors_0 = lists_of_color_detectors[0]
+        self.list_of_color_detectors_1 = lists_of_color_detectors[1]
+        self.projection_matrix_0 = calibration_parameters[0]
+        self.projection_matrix_1 = calibration_parameters[1]
+        self.F = calibration_parameters[2]
         # Open the video capture
-        self.cap = cv2.VideoCapture(self.camera_device_name)
+        self.cap_0 = cv2.VideoCapture(self.camera_device_names[0])
+        self.cap_1 = cv2.VideoCapture(self.camera_device_names[1])
+        # Create a black image with the same type and shape as the frame
+        ret, frame = self.cap_1.read()
+        self.back_image = np.zeros(shape=frame.shape[0:2], dtype=np.uint8)
+        # Plot the epilines on the image
+        if points_for_epilines is not None:
+            lines_1 = cv2.computeCorrespondEpilines(points_for_epilines.reshape(-1,1,2),
+                                                    whichImage=1,
+                                                    F=self.F)
+            lines_1=lines_1.reshape(-1,3)
+            for line in lines_1:
+                self.back_image = drawline(image=self.back_image, line=line)
 
     def timer_callback(self):
         """Read the camera and segment the pixels periodically"""
@@ -79,74 +159,167 @@ class ColorExtractorNode(Node):
         # self.get_logger().info('Published: "%s"' % msg.data)
 
         start_time = time.perf_counter()
-        # Read the camera
-        ret, frame = self.cap.read()
-        # First segment the background and get the mask
-        fgmask = self.background_subtractor.apply(frame, learningRate=0)==255 # The mask have 3 value 0 127 for shadow and 255 for foreground
-        # Second segment the colors by applying each detector on the frame and get the mask
-        fgmask_color = np.zeros(shape=frame.shape[0:2], dtype=np.bool)
-        for detector in self.list_of_color_detectors:
-            fgmask_i = detector.apply(frame, learningRate=0)
-            fgmask_i = ((fgmask_i==0) | (fgmask_i==127))
-            # Combine with previous masks
-            fgmask_color = fgmask_i | fgmask_color
-        # Combine with background masks
-        fgmask = fgmask & fgmask_color
-        # Get the non-zero coordinate
-        coordinates = extract_non_zero_pixel_in_black_white_image(image=fgmask)
-        print(len(coordinates))
-        # NOTE: Execute time for previous code ~ 0.025-0.050 ~ 20-40Hz
-        # if len(coordinates) < 1000:
-        #     adjacency_matrix = get_adjacency_matrix(coordinates=coordinates)
-        # connected_components = get_connected_components(adjacency_matrix=adjacency_matrix)
-        # Show the foreground
-        """Please select only one of these two options: binary image or masked image"""
-        # Create a binary image
-        fgmask = fgmask.astype(np.uint8)*255
-        # # Apply the mask to the image
-        # fgmask = (fgmask[:,:,None])*frame
-        cv2.imshow('frame', fgmask)
+        # Segment the color
+        fgmask_0 = read_and_apply_subtractors_for_one_camera(self.cap_0, self.background_subtractor_0, self.list_of_color_detectors_0)
+        fgmask_1 = read_and_apply_subtractors_for_one_camera(self.cap_1, self.background_subtractor_1, self.list_of_color_detectors_1)
+        # Extract the non-zero pixels
+        """NOTE THE COORDINATES returned are (height, width) while I need (width, height)"""
+        coordinates_0 = extract_non_zero_pixel_in_black_white_image(image=fgmask_0)[:,::-1]
+        if len(coordinates_0)==0:
+            self.simple_plot(fgmask_0, fgmask_1, self.back_image)
+            return
+        coordinates_1 = extract_non_zero_pixel_in_black_white_image(image=fgmask_1)[:,::-1]
+        # adjacency_matrix_0 =  get_adjacency_matrix(coordinates=coordinates_0, neighbour_square_distance_cut_off=100)
+        # adjacency_matrix_1 =  get_adjacency_matrix(coordinates=coordinates_1, neighbour_square_distance_cut_off=100)
+        # connected_components_0=get_connected_components(adjacency_matrix_0)
+        # connected_components_1=get_connected_components(adjacency_matrix_1)
+        # Find epilines corresponding to points in left image (first image) and draw its lines on right image
+        lines_1 = cv2.computeCorrespondEpilines(coordinates_0.reshape(-1,1,2),
+                                                whichImage=1,
+                                                F=self.F)
+        # Find the matching points
+        matched_result=find_points_nearest_to_lines_and_return_one_on_those_lines(points=coordinates_1.reshape(-1,2),
+                                                                                  lines=lines_1.reshape(-1,3),
+                                                                                  square_of_cut_off_for_near=5)
+        matched_coordinates_1, matched_mask = matched_result
+        if matched_mask.sum()==0:
+            self.simple_plot(fgmask_0, fgmask_1, self.back_image)
+            return
+        if len(matched_mask)!=len(matched_coordinates_1):
+            self.simple_plot(fgmask_0, fgmask_1, self.back_image)
+            return # TODO later: I have no idea why sometimes the length of these two do not match
+        # Get the points that have correspondence and project to 3D
+        proj_point_0=coordinates_0[matched_mask].astype(np.float32)
+        proj_point_1=matched_coordinates_1[matched_mask]
+        point_in_3D = cv2.triangulatePoints(projMatr1=self.projection_matrix_0,
+                                            projMatr2=self.projection_matrix_1,
+                                            projPoints1=proj_point_0.squeeze().T,
+                                            projPoints2=proj_point_1.squeeze().T)
+        # print(point_in_3D.shape)
+        # Show the foreground (Convert binary to image)
+        fgmask_0 = fgmask_0.astype(np.uint8)*255
+        fgmask_1 = fgmask_1.astype(np.uint8)*255
+        fgmask_1 = drawline(fgmask_1, lines_1.reshape(-1,3)[0])
+        img = draw_points(image=self.back_image, points=proj_point_1)
+        # Show
+        # cv2.imshow('frame_0', fgmask_0)
+        # cv2.imshow('frame_1', fgmask_1)
+        # cv2.imshow('validation', img)
         cv2.waitKey(1)
         rclpy.logging.get_logger('my_logger').info(f"Execute time {round(time.perf_counter()-start_time,3)}")
+    def simple_plot(self, fgmask_0, fgmask_1, back_image):
+        """"Helper function to plot the fgmask"""
+        fgmask_0 = fgmask_0.astype(np.uint8)*255
+        fgmask_1 = fgmask_1.astype(np.uint8)*255
+        # cv2.imshow('frame_0', fgmask_0)
+        # cv2.imshow('frame_1', fgmask_1)
+        cv2.imshow('validation', back_image)
+        cv2.waitKey(1)
+        return        
+
+
+        # return
+        # # ret, fgmask_0 = self.cap_0.read()
+        # # ret, fgmask_1 = self.cap_1.read()
+        # # Rectify the images
+        # fgmask_0 = cv2.remap(src=fgmask_0,
+        #                      map1=self.cam_1_map1,
+        #                      map2=self.cam_1_map2,
+        #                      interpolation=cv2.INTER_LINEAR)
+        # fgmask_1 = cv2.remap(src=fgmask_1,
+        #                      map1=self.cam_2_map1,
+        #                      map2=self.cam_2_map2,
+        #                      interpolation=cv2.INTER_LINEAR)
+        # # # Convert images to grayscale for stereo matching
+        # # img1_rect = cv2.cvtColor(img1_rect, cv2.COLOR_BGR2GRAY)
+        # # img2_rect = cv2.cvtColor(img2_rect, cv2.COLOR_BGR2GRAY)xsqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq
+        # # Compute disparity map
+        # disparity = self.stereo.compute(fgmask_0, fgmask_1).astype(np.float32)/16 # StereoSGBM_create return 16 bit fixed-point disparity map with 4 fractional bits
+        # # Normalize disparity for visualization
+        # disparity_normalized = cv2.normalize(disparity, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+        # # # Reproject to 3D
+        # # # Remember to set missing value to -1
+        # # points_3d = cv2.reprojectImageTo3D(disparity=disparity,
+        # #                                    Q=self.Q,
+        # #                                    handleMissingValues=False)
+        # cv2.imshow('frame', disparity_normalized)
 
 def main(args=sys.argv):
-    # Some parameters
-    camera_device_name = args[1]
-    checker_board_size=[10,7]
-    checker_board_square_edge_length=25
+    """Some parameters"""
+    camera_device_name_0 = args[1]
+    camera_device_name_1 = args[2]
+    checker_board_size=[6,4]
+    checker_board_square_edge_length=15
     number_of_frames_for_calibrating=10
-    number_of_register_frame=100
-    number_of_register_frame=100
-
-    # Test the cameras
-    rclpy.logging.get_logger('my_logger').info(f"Testing camera {camera_device_name}...")
-    test_camera(camera_device_name)
-    rclpy.logging.get_logger('my_logger').info(f"Finish testing camera {camera_device_name}!!!")
-
-    # # Calibrate 1st camera:
-    # main_calibrate_result = calibrate_and_validate_one_camera(camera_device_name=camera_device_name,
-    #                                                           checker_board_size=checker_board_size,
-    #                                                           checker_board_square_edge_length=checker_board_square_edge_length,
-    #                                                           number_of_frame_for_registering=number_of_frames_for_calibrating)
-    # projection_matrix, mtx, rvec, tvec = main_calibrate_result
-
-    # registering background and colors
-    rclpy.logging.get_logger('my_logger').info(f"Press 'esc' to start registering background and colors {camera_device_name}")
-    main_register_result = registering_background_and_colors_one_camera(camera_device_name,
-                                                                        number_of_register_frame,
-                                                                        number_of_register_frame)
-    background_subtractor, list_of_color_detectors = main_register_result
-    rclpy.logging.get_logger('my_logger').info(f"Finish registering background and colors {camera_device_name}")
-
+    number_of_frames_for_registering_background=25
+    number_of_frames_for_registering_colors=25
+    background_varThreshold=128
+    color_varThreshold=8
+    """Configurate the cameras"""
+    configurate_result = configurate_camera(camera_device_name_0)
+    assert configurate_result==True, "Failed to configurate camera"
+    configurate_result = configurate_camera(camera_device_name_1)
+    assert configurate_result==True, "Failed to configurate camera"
+    # show_cameras([camera_device_name_0,camera_device_name_1])
+    """Test the cameras"""
+    rclpy.logging.get_logger('my_logger').info(f"Testing camera...")
+    image_shape_0=test_camera(camera_device_name_0)
+    image_shape_1=test_camera(camera_device_name_1)
+    rclpy.logging.get_logger('my_logger').info(f"Finish testing camera!!!")
+    """Calibrate cameras"""
+    main_calibrate_result = calibrate_and_validate_one_camera(camera_device_name=camera_device_name_0,
+                                                              checker_board_size=checker_board_size,
+                                                              checker_board_square_edge_length=checker_board_square_edge_length,
+                                                              number_of_frame_for_registering=number_of_frames_for_calibrating)
+    world_points_0, detected_corners_0, mtx_0, dist_0, rvec_0, tvec_0, projection_matrix_0 = main_calibrate_result
+    main_calibrate_result = calibrate_and_validate_one_camera(camera_device_name=camera_device_name_1,
+                                                              checker_board_size=checker_board_size,
+                                                              checker_board_square_edge_length=checker_board_square_edge_length,
+                                                              number_of_frame_for_registering=number_of_frames_for_calibrating)
+    world_points_1, detected_corners_1, mtx_1, dist_1, rvec_1, tvec_1, projection_matrix_1 = main_calibrate_result
+    # Get the fundamental matrix
+    F, mask = cv2.findFundamentalMat(points1=detected_corners_0[0],
+                                     points2=detected_corners_1[0],
+                                     method=cv2.FM_LMEDS)
+    # global test_point
+    # test_point = detected_corners_0[0][0]
+    # print(test_point)
+    background_subtractor_0=None
+    background_subtractor_1=None
+    list_of_color_detectors_0=None
+    list_of_color_detectors_1=None
+    """Registering background"""
+    rclpy.logging.get_logger('my_logger').info(f"Registering background {camera_device_name_0}... Please wait!!!")
+    background_subtractor_0 = register_background(camera_device_name=camera_device_name_0,
+                                                  number_of_register_frame=number_of_frames_for_registering_background,
+                                                  varThreshold=background_varThreshold)
+    rclpy.logging.get_logger('my_logger').info(f"Registering background {camera_device_name_1}... Please wait!!!")
+    background_subtractor_1 = register_background(camera_device_name=camera_device_name_1,
+                                                  number_of_register_frame=number_of_frames_for_registering_background,
+                                                  varThreshold=background_varThreshold)
+    """Registering colors"""
+    rclpy.logging.get_logger('my_logger').info(f"Registering color {camera_device_name_0}... Please select your colors!!!")
+    list_of_color_detectors_0 = register_gmm_colors(camera_device_name=camera_device_name_0,
+                                                    number_of_register_frame=number_of_frames_for_registering_colors,
+                                                    varThreshold=color_varThreshold)
+    rclpy.logging.get_logger('my_logger').info(f"Registering color {camera_device_name_1}... Please select your colors!!!")
+    list_of_color_detectors_1 = register_gmm_colors(camera_device_name=camera_device_name_1,
+                                                    number_of_register_frame=number_of_frames_for_registering_colors,
+                                                    varThreshold=color_varThreshold)
+    rclpy.logging.get_logger('my_logger').info(f"Finish registering background and colors")
     """Main ROS publisher"""
     rclpy.init(args=args)
-    color_extractor_node = ColorExtractorNode(camera_device_name=camera_device_name,
-                                              background_subtractor=background_subtractor,
-                                              list_of_color_detectors=list_of_color_detectors)
+    calibration_parameters = [projection_matrix_0, projection_matrix_1, F]
+    color_extractor_node = ColorExtractorNode(camera_device_names=[camera_device_name_0, camera_device_name_1],
+                                              background_subtractors=[background_subtractor_0, background_subtractor_1],
+                                              lists_of_color_detectors=[list_of_color_detectors_0, list_of_color_detectors_1],
+                                              calibration_parameters=calibration_parameters,
+                                              points_for_epilines=detected_corners_0[0])
     try:
         rclpy.spin(color_extractor_node)
     except KeyboardInterrupt:
         pass
+    rclpy.logging.get_logger('my_logger').info(f"Exiting")
     # Clean exit (Optional as Python garbage collectors will handle them)
     color_extractor_node.cap.release()
     cv2.destroyAllWindows()

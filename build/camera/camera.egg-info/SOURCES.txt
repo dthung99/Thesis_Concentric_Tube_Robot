@@ -3,9 +3,12 @@ setup.cfg
 setup.py
 camera/__init__.py
 camera/camera_register_module.py
+camera/change_cam_prop.py
 camera/print_hello.py
 camera/prototype_background_segmentation.py
 camera/prototype_camera_calibration.py
+camera/register_camera_and_save.py
+camera/test.py
 camera/video_process_func.py
 camera.egg-info/PKG-INFO
 camera.egg-info/SOURCES.txt

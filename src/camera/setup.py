@@ -20,7 +20,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'print_hello = camera.print_hello:main'
+            'print_hello = camera.print_hello:main',
+            'register_camera_and_save = camera.register_camera_and_save:main',
+            'test = camera.test:main',
         ],
     },
 )

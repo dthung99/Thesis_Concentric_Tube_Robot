@@ -14,6 +14,20 @@ def print_memory_usage():
     memory_used = memory_info.rss / (1024.0 ** 2)  # Memory used in MB
     print(f"Current memory usage: {memory_used:.2f} MB")
 
+def configurate_camera(camera_device_name):
+    exposure=0
+    white_balance=4600
+    # Turn auto mode off for exposure and white balance
+    cap = cv2.VideoCapture(camera_device_name)
+    result = True
+    result = result & cap.set(cv2.CAP_PROP_AUTOFOCUS, 1.0)
+    result = result & cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 3.0)
+    result = result & cap.set(cv2.CAP_PROP_AUTO_WB, 1.0)
+    # Set the exposure and white balance manually
+    # result = result & cap.set(cv2.CAP_PROP_EXPOSURE, exposure)
+    # result = result & cap.set(cv2.CAP_PROP_WB_TEMPERATURE, white_balance)
+    return result
+
 def test_camera(camera_device_name):
     """Test the camera to have the correct format"""
     # Open the camera
@@ -59,6 +73,96 @@ def show_cameras(camera_device_names):
     for cap in caps:
         cap.release()
     cv2.destroyAllWindows()
+
+def calibrate_one_camera_and_get_checker_board_vertices_test(camera_device_name,
+                                                             checker_board_size=[10,7],
+                                                             checker_board_square_edge_length=25,
+                                                             number_of_frame_for_registering=50,
+                                                             show=False):
+    # Open the camera
+    frame = cv2.imread(camera_device_name)
+    ret = 1
+    # Some parameter for tuning
+    expected_image_size = np.array(frame.shape)
+    corner_refinement_window = max(int(expected_image_size.max()/50), 11) #The window size for subpixel refinement
+    # Termination criteria for checker board detection refinement
+    criteria = (cv2.TERM_CRITERIA_MAX_ITER + cv2.TERM_CRITERIA_EPS, 30, 0.001)
+    # Number of u and v corner (u = width, v = height)
+    number_of_u_corners = int(checker_board_size[0])
+    number_of_v_corners = int(checker_board_size[1])
+    # Prepare object points (3D points), like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
+    objp = np.zeros((number_of_v_corners*number_of_u_corners,3), np.float32)
+    objp[:,:2] = np.mgrid[0:number_of_u_corners,0:number_of_v_corners].T.reshape(-1,2) #Someone else code. It just create a grid of (-1,3) coordinate
+    objp = objp*checker_board_square_edge_length
+    # Create a counter to keep track of number of frames that is registered
+    # objpoints and imgpoints to store the points detected in multiple frame
+    counter = 0
+    world_points_list = []
+    detected_corners_list = []
+    while counter<number_of_frame_for_registering:
+        counter+=1
+        print(f"Counter: {counter}/{number_of_frame_for_registering}")
+        # Get the image from tha camera
+        frame = cv2.imread(camera_device_name)
+        if ret == False:
+            continue
+        # Convert the image to gray scale
+        if(frame.shape[-1] == 3):
+            input_image_in_gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+        else:
+            input_image_in_gray = frame
+        # Find the chess board corners
+        find_corner_result, detected_corners = cv2.findChessboardCorners(input_image_in_gray,
+                                                                         (number_of_u_corners, number_of_v_corners),
+                                                                         flags=None)
+        if find_corner_result==False:
+            # This show help when show=True, the visualization is smoother
+            if show:
+                cv2.imshow(f'Detecting corners {camera_device_name}',frame)
+                # Press 'esc' to exit the loop
+                if cv2.waitKey(1) & 0xFF == 27:
+                    break
+            continue
+        # Refine the points to get better ones
+        # This code modify the original corners too!!!
+        detected_corners = cv2.cornerSubPix(input_image_in_gray,
+                                            detected_corners,
+                                            (corner_refinement_window, corner_refinement_window),
+                                            (-1,-1),
+                                            criteria)
+        # Store the points
+        world_points_list.append(objp)
+        detected_corners_list.append(detected_corners)
+        # Show the corners detected
+        if show:
+            # Draw and display the corners
+            frame = cv2.drawChessboardCorners(frame,
+                                              (number_of_u_corners,number_of_v_corners),
+                                              detected_corners,
+                                              1)
+            cv2.imshow(f'Detecting corners {camera_device_name}',frame)
+            # Press 'esc' to exit the loop
+            if cv2.waitKey(1) & 0xFF == 27:
+                break
+        # return find_corner_result, detected_corners, objp
+    # Release the camera and close all windows
+    cv2.destroyAllWindows()
+    # End if no corner is detected
+    if len(world_points_list) == 0:
+        return detected_corners_list, world_points_list        
+    # Calibrate the camera and get the projection matrix
+    print(f"Calibrating {camera_device_name}")
+    image_shape = expected_image_size[:2]
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(world_points_list, detected_corners_list, image_shape[::-1], None, None)
+    ##Calculate and print projection Error
+    mean_error = 0
+    for i in range(len(world_points_list)):
+        projected_imgpoints, _ = cv2.projectPoints(world_points_list[i], rvecs[i], tvecs[i], mtx, dist)
+        error = cv2.norm(detected_corners_list[i],projected_imgpoints, cv2.NORM_L2)/len(projected_imgpoints)
+        mean_error += error
+    print(f"Average projection error for camera {camera_device_name}: {round(mean_error/len(world_points_list),4)} pixels")    
+    return detected_corners_list, world_points_list, mtx, dist, rvecs, tvecs
+
 
 def calibrate_one_camera_and_get_checker_board_vertices(camera_device_name,
                                                         checker_board_size=[10,7],
@@ -149,6 +253,64 @@ def calibrate_one_camera_and_get_checker_board_vertices(camera_device_name,
         mean_error += error
     print(f"Average projection error for camera {camera_device_name}: {round(mean_error/len(world_points_list),4)} pixels")    
     return detected_corners_list, world_points_list, mtx, dist, rvecs, tvecs
+
+# Warning!!!: no unit test for this
+def get_rectify_map_and_Q(world_points_list,
+                          detected_corners_list_1,
+                          detected_corners_list_2,
+                          mtx1,
+                          dist1,
+                          mtx2,
+                          dist2,
+                          image_shape,
+                          alpha=1):
+    """Get the neccessary map for rectification and the Q matrix
+    world_points_list: list of world coordinates,
+    detected_corners_list_1: list of checkerboard corners coordinates,
+    detected_corners_list_2: list of checkerboard corners coordinates,
+    mtx1: camera matrix 1,
+    dist1: distortion coeff 1,
+    mtx2: camera matrix 2,
+    dist2: distortion coeff 2,
+    image_shape: MUST BE NUMPY SHAPE (HEIGHT, WIDTH), NO CHANNEL"""
+    #  stereo Calibrate
+    stereo_calibrate_results = cv2.stereoCalibrate(objectPoints=world_points_list,
+                                                   imagePoints1=detected_corners_list_1,
+                                                   imagePoints2=detected_corners_list_2,
+                                                   cameraMatrix1=mtx1,
+                                                   distCoeffs1=dist1,
+                                                   cameraMatrix2=mtx2,
+                                                   distCoeffs2=dist2,
+                                                   imageSize=image_shape[::-1])
+    retval, mtx1, dist1, mtx2, dist2, R, T, E, F = stereo_calibrate_results
+    # Get the Rectification coeff
+    rectify_coeff_results = cv2.stereoRectify(cameraMatrix1=mtx1,
+                                              distCoeffs1=dist1,
+                                              cameraMatrix2=mtx2,
+                                              distCoeffs2=dist2,
+                                              imageSize=image_shape[::-1],
+                                              R=R,
+                                              T=T,
+                                              alpha=alpha)
+
+    R1, R2, P1, P2, Q, ROI1, ROI2 = rectify_coeff_results
+
+    # Calculate the Rectification map
+    cam_1_map1, cam_1_map2 = cv2.initUndistortRectifyMap(cameraMatrix=mtx1,
+                                                        distCoeffs=dist1,
+                                                        R=R1,
+                                                        newCameraMatrix=P1,
+                                                        size=image_shape[::-1],
+                                                        m1type=cv2.CV_32FC1)
+
+    cam_2_map1, cam_2_map2 = cv2.initUndistortRectifyMap(cameraMatrix=mtx2,
+                                                        distCoeffs=dist2,
+                                                        R=R2,
+                                                        newCameraMatrix=P2,
+                                                        size=image_shape[::-1],
+                                                        m1type=cv2.CV_32FC1)
+    
+    return cam_1_map1, cam_1_map2, cam_2_map1, cam_2_map2, Q
 
 def draw_line(img, corners, imgpts, line_width=2):
     assert imgpts.dtype == np.int_, "imgpts need to be np.int_"
@@ -416,6 +578,9 @@ if __name__ == '__main__':
     # checker_board_size=[10,7]
     # checker_board_square_edge_length=25
     # number_of_frame_for_registering=50
+    # # Check configurate_camera
+    # configurate_result = configurate_camera(camera_device)
+    # assert configurate_result==True, "configurate_camera failed"
     # # Test the cameras and get camera output shape
     # print(f"Testing camera {camera_device}...")
     # camera_output_shape_0 = test_camera(camera_device)
