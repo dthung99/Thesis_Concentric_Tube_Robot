@@ -1,4 +1,5 @@
 [console_scripts]
 print_hello = camera.print_hello:main
 register_camera_and_save = camera.register_camera_and_save:main
+segment_tubes = camera.segment_tubes:main
 test = camera.test:main

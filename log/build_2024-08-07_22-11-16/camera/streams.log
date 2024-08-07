@@ -1,0 +1,33 @@
+[0.674s] Invoking command in '/home/dangthehung/ros2_ws/build/camera': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PS1=(myenv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ PYTHONPATH=/home/dangthehung/ros2_ws/build/camera/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/dangthehung/ros2_ws/install/camera/lib/python3.12/site-packages:${PYTHONPATH} VIRTUAL_ENV_PROMPT=(myenv) /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py develop --editable --build-directory /home/dangthehung/ros2_ws/build/camera/build --no-deps symlink_data
+[0.947s] running develop
+[0.948s] /usr/lib/python3/dist-packages/setuptools/command/develop.py:40: EasyInstallDeprecationWarning: easy_install command is deprecated.
+[0.948s] !!
+[0.948s] 
+[0.948s]         ********************************************************************************
+[0.948s]         Please avoid running ``setup.py`` and ``easy_install``.
+[0.948s]         Instead, use pypa/build, pypa/installer or other
+[0.948s]         standards-based tools.
+[0.948s] 
+[0.948s]         See https://github.com/pypa/setuptools/issues/917 for details.
+[0.949s]         ********************************************************************************
+[0.949s] 
+[0.949s] !!
+[0.949s]   easy_install.initialize_options(self)
+[1.138s] running egg_info
+[1.156s] writing camera.egg-info/PKG-INFO
+[1.156s] writing dependency_links to camera.egg-info/dependency_links.txt
+[1.156s] writing entry points to camera.egg-info/entry_points.txt
+[1.156s] writing requirements to camera.egg-info/requires.txt
+[1.156s] writing top-level names to camera.egg-info/top_level.txt
+[1.193s] reading manifest file 'camera.egg-info/SOURCES.txt'
+[1.193s] writing manifest file 'camera.egg-info/SOURCES.txt'
+[1.213s] running build_ext
+[1.213s] Creating /home/dangthehung/ros2_ws/install/camera/lib/python3.12/site-packages/camera.egg-link (link to .)
+[1.214s] Installing print_hello script to /home/dangthehung/ros2_ws/install/camera/lib/camera
+[1.214s] Installing register_camera_and_save script to /home/dangthehung/ros2_ws/install/camera/lib/camera
+[1.214s] Installing segment_tubes script to /home/dangthehung/ros2_ws/install/camera/lib/camera
+[1.214s] Installing test script to /home/dangthehung/ros2_ws/install/camera/lib/camera
+[1.214s] 
+[1.214s] Installed /home/dangthehung/ros2_ws/build/camera
+[1.214s] running symlink_data
+[1.250s] Invoked command in '/home/dangthehung/ros2_ws/build/camera' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PS1=(myenv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ PYTHONPATH=/home/dangthehung/ros2_ws/build/camera/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/dangthehung/ros2_ws/install/camera/lib/python3.12/site-packages:${PYTHONPATH} VIRTUAL_ENV_PROMPT=(myenv) /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py develop --editable --build-directory /home/dangthehung/ros2_ws/build/camera/build --no-deps symlink_data

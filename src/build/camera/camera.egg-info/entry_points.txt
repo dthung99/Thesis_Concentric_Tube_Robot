@@ -2,3 +2,4 @@
 print_hello = camera.print_hello:main
 register_camera_and_save = camera.register_camera_and_save:main
 test = camera.test:main
+test2 = camera.test2:main

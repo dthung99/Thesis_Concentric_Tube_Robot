@@ -8,6 +8,7 @@ camera/print_hello.py
 camera/prototype_background_segmentation.py
 camera/prototype_camera_calibration.py
 camera/register_camera_and_save.py
+camera/segment_tubes.py
 camera/stored_code_rectification.py
 camera/test.py
 camera/video_process_func.py
