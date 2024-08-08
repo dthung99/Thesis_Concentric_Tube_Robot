@@ -196,7 +196,8 @@ class ColorExtractorNode(Node):
         # Find the matching points
         matched_result=find_points_nearest_to_lines_and_return_one_on_those_lines(points=coordinates_1.reshape(-1,2),
                                                                                   lines=lines_1.reshape(-1,3),
-                                                                                  square_of_cut_off_for_near=1.5)
+                                                                                  square_of_cut_off_for_near=1.5,
+                                                                                  std_cut_off=5)
         matched_coordinates_1, matched_mask = matched_result
         if matched_mask.sum()==0:
             self.simple_plot(fgmask_0, fgmask_1, self.back_image)

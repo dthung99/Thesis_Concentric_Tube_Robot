@@ -68,7 +68,7 @@ def extract_hsv_pixel_h(image, registered_colors, color_distance = 10):
     coordinate = np.stack(np.where(condition), axis=1)
     return coordinate
 
-def find_points_nearest_to_lines_and_return_one_on_those_lines(points, lines, square_of_cut_off_for_near):
+def find_points_nearest_to_lines_and_return_one_on_those_lines(points, lines, square_of_cut_off_for_near, std_cut_off):
     """
     points: list of points of shape (p,2). THE POINTS MUST BE (x,y)
     lines: list of lines of shape (n,3) (ax+by+c=0)
@@ -91,13 +91,17 @@ def find_points_nearest_to_lines_and_return_one_on_those_lines(points, lines, sq
     distance=(a*x+b*y+c)**2/(a**2+b**2)
     # Extract only the nearest x and get the median x
     result_x = np.ma.masked_where(distance>square_of_cut_off_for_near, x)
+    # Mask where std is greater than a cut off
+    std_mask = np.ma.std(result_x, axis=1)>std_cut_off
+    std_mask=np.ma.masked_where(std_mask,std_mask)
+    std_mask=~std_mask.mask
+    # Get the median of x value
     result_x = np.ma.median(result_x, axis=1)[:,None]
     # Get one point on each line
     result_y = (-c - a*result_x)/b
-    mask = ~result_x.mask
-    result = np.concat((result_x.data, result_y.data), axis=-1)*mask
+    mask = ~result_x.mask*std_mask.reshape((-1,1))
+    result = np.concatenate((result_x.data, result_y.data), axis=-1)*mask
     return result, mask.reshape((-1))
-
 
 if __name__ == '__main__':
     # Unit test for each function
@@ -138,9 +142,9 @@ if __name__ == '__main__':
 
     points = np.array([[1, 1], [-12, 9]])
     lines = np.array([[0, 1, -9], [1, 0, 100], [1, -1, 0]])
-    result, mask = find_points_nearest_to_lines_and_return_one_on_those_lines(points=points, lines=lines, square_of_cut_off_for_near=100)
-    assert (result == np.array([[-5.5, 9], [0, 0], [1, 1]])).all(), "find_points_nearest_to_lines_and_return_one_on_those_lines error"
-    assert (mask == np.array([True, False, True])).all(), "find_points_nearest_to_lines_and_return_one_on_those_lines error"
+    result, mask = find_points_nearest_to_lines_and_return_one_on_those_lines(points=points, lines=lines, square_of_cut_off_for_near=100, std_cut_off=5)
+    assert (result == np.array([[0, 0], [0, 0], [1, 1]])).all(), "find_points_nearest_to_lines_and_return_one_on_those_lines error"
+    assert (mask == np.array([False, False, True])).all(), "find_points_nearest_to_lines_and_return_one_on_those_lines error"
 
     print("All test passed")
 
