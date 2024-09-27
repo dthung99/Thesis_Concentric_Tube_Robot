@@ -6,6 +6,8 @@ I accomplished two main tasks in my thesis:
 
 + **Design and manufacture a concentric tube robot** (Yes, an entire robot—but it's a small one, haha). This involved conducting finite element analysis to design and manufacture the tube, as well as designing, 3D printing, and assembling an actuation system (both mechanical and electrical). All the information can be found in the report.
 
+![robot](images/robot.jpg)
+
 + **3D tracking of the entire robot:** Basically, I set up a camera system and developed an algorithm for tracking it. This is the coding part, which is why I created this repository.
 
 ## 3D Tracking Algorithm
