@@ -27,17 +27,10 @@ I run the algorithm on ROS (Robot Operating System) on a Linux machine. I chose 
 The main code can be found in [`tracking_3D/src/camera/camera`](tracking_3D/src/camera/camera). If you are familiar with ROS, you will know how the camera package is set up. The main running code is `segment_tubes.py`, which imports all the modules from the files in the same folder. I wrote it with 100% unit test coverage for the small modules!
 
 ### Result
-Ground truth:
-
-![ground truth](images/3D_ground_truth.jpg)
-
-3D tracking:
-
-![ground truth](images/3D_tracking.png)
 
 <div style="text-align: center;">
-    <img src="images/3D_ground_truth.jpg" alt="Ground Truth" width="400" height="auto" />
-    <img src="images/3D_tracking.png" alt="3D Tracking" width="400" height="auto" />
+    <img src="images/3D_ground_truth.jpg" alt="Ground Truth" width="auto" height="200" />
+    <img src="images/3D_tracking.png" alt="3D Tracking" width="auto" height="200" />
 </div>
 
 
