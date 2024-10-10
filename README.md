@@ -35,6 +35,12 @@ Ground truth:
 
 ![ground truth](images/3D_tracking.png)
 
+<div style="text-align: center;">
+    <img src="images/3D_ground_truth.jpg" alt="Ground Truth" width="400" height="auto" />
+    <img src="images/3D_tracking.png" alt="3D Tracking" width="400" height="auto" />
+</div>
+
+
 ## Kinematics Simulation
 
 [`kinematics_simulation`](kinematics_simulation) contains simplified kinematic models of the robots. Yes, it has 100% unit test coverage too. I think you can just download the whole folder and run `workspace_simulation.py`. It still works—I tested it, haha! I wrote it using Torch, NumPy, and Matplotlib, so you need to install them first using pip. (I used Torch because it keeps track of the computational graph, which I thought might be needed for some optimization techniques later on.)
