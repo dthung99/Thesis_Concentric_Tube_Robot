@@ -26,6 +26,15 @@ I run the algorithm on ROS (Robot Operating System) on a Linux machine. I chose 
 
 The main code can be found in [`tracking_3D/src/camera/camera`](tracking_3D/src/camera/camera). If you are familiar with ROS, you will know how the camera package is set up. The main running code is `segment_tubes.py`, which imports all the modules from the files in the same folder. I wrote it with 100% unit test coverage for the small modules!
 
+### Result
+Ground truth:
+
+![ground truth](images/3D_ground_truth.jpg)
+
+3D tracking:
+
+![ground truth](images/3D_ground_truth.jpg)
+
 ## Kinematics Simulation
 
 [`kinematics_simulation`](kinematics_simulation) contains simplified kinematic models of the robots. Yes, it has 100% unit test coverage too. I think you can just download the whole folder and run `workspace_simulation.py`. It still works—I tested it, haha! I wrote it using Torch, NumPy, and Matplotlib, so you need to install them first using pip. (I used Torch because it keeps track of the computational graph, which I thought might be needed for some optimization techniques later on.)
