@@ -33,7 +33,7 @@ Ground truth:
 
 3D tracking:
 
-![ground truth](images/3D_ground_truth.jpg)
+![ground truth](images/3D_tracking.png)
 
 ## Kinematics Simulation
 
