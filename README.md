@@ -30,6 +30,8 @@ The main code can be found in [`tracking_3D/src/camera/camera`](tracking_3D/src/
 
 [`kinematics_simulation`](kinematics_simulation) contains simplified kinematic models of the robots. Yes, it has 100% unit test coverage too. I think you can just download the whole folder and run `workspace_simulation.py`. It still works—I tested it, haha! I wrote it using Torch, NumPy, and Matplotlib, so you need to install them first using pip. (I used Torch because it keeps track of the computational graph, which I thought might be needed for some optimization techniques later on.)
 
+![kinematics simulation](images/kinematics_simulation.png)
+
 ## Final Word
 
 I don't expect anyone to be able to use this; I just put it here as proof of an interesting period.
